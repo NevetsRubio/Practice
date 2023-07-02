@@ -1,6 +1,5 @@
 using Newtonsoft.Json;
 using System.ComponentModel;
-using System.Windows.Forms;
 using WindowsFormsApp.Models;
 
 namespace WindowsFormsApp
@@ -8,7 +7,7 @@ namespace WindowsFormsApp
     public partial class Form1 : Form
     {
         private readonly BindingList<Book> _data;
-        private string FILTER = "Json files (*.json)|*.json|Text files (*.txt)|*.txt";
+        private readonly string FILTER = "Json files (*.json)|*.json|Text files (*.txt)|*.txt";
         public Form1()
         {
             InitializeComponent();
@@ -30,26 +29,29 @@ namespace WindowsFormsApp
 
             if (string.IsNullOrEmpty(title))
             {
-                MessageBox.Show("Book is a required field.");
+                MessageBox.Show("Title is a required field.");
                 return;
             }
 
             Book book = new Book(author, title);
 
             _data.Add(book);
+
+            txtAuthor.Text = string.Empty;
+            txtTitle.Text = string.Empty;
         }
 
         private void btnExport_Click(object sender, EventArgs e)
         {
             string booksJson = JsonConvert.SerializeObject(dgvRecords.DataSource);
-            using (SaveFileDialog saveFiledialog = new SaveFileDialog())
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
             {
-                saveFiledialog.Filter = FILTER;
-                saveFiledialog.RestoreDirectory = true;
+                saveFileDialog.Filter = FILTER;
+                saveFileDialog.RestoreDirectory = true;
 
-                if (saveFiledialog.ShowDialog() == DialogResult.OK)
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    File.WriteAllText(saveFiledialog.FileName, booksJson);
+                    File.WriteAllText(saveFileDialog.FileName, booksJson);
                 }
             }
         }
@@ -63,25 +65,26 @@ namespace WindowsFormsApp
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    Stream fileStream = openFileDialog.OpenFile();
-
-                    using (StreamReader reader = new StreamReader(fileStream))
+                    using (Stream fileStream = openFileDialog.OpenFile())
                     {
-                        string bookJson = reader.ReadToEnd();
-                        if (string.IsNullOrEmpty(bookJson))
+                        using (StreamReader reader = new StreamReader(fileStream))
                         {
-                            MessageBox.Show("The Selected file was empty.");
-                            return;
-                        }
-
-                        List<Book>? books = JsonConvert.DeserializeObject<List<Book>>(bookJson);
-
-                        if (books != null)
-                        {
-                            _data.Clear();
-                            foreach (Book book in books)
+                            string bookJson = reader.ReadToEnd();
+                            if (string.IsNullOrEmpty(bookJson))
                             {
-                                _data.Add(book);
+                                MessageBox.Show("The Selected file was empty.");
+                                return;
+                            }
+
+                            List<Book>? books = JsonConvert.DeserializeObject<List<Book>>(bookJson);
+
+                            if (books != null)
+                            {
+                                _data.Clear();
+                                foreach (Book book in books)
+                                {
+                                    _data.Add(book);
+                                }
                             }
                         }
                     }
